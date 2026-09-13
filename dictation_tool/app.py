@@ -26,6 +26,7 @@ class App:
 
         self.recorder = AudioRecorder()
         self.stt_engine = SttEngine(model_size=config.model_size, device=config.device)
+        logger.info(f"Motore STT caricato su device: {self.stt_engine.device}")
         self.output_handler = OutputHandler()
         self.hotkey_listener = HotkeyListener(config.hotkey, self._on_hotkey_toggle)
         self.tray = TrayIcon(
@@ -43,28 +44,34 @@ class App:
     def _start_recording(self):
         self.state = State.RECORDING
         self.tray.set_state("recording")
-        self.recorder.start()
+        try:
+            self.recorder.start()
+        except Exception:
+            logger.exception("Impossibile avviare la registrazione (microfono non trovato?)")
+            self.state = State.IDLE
+            self.tray.set_state("idle")
 
     def _stop_recording_and_transcribe(self):
         self.state = State.TRANSCRIBING
         self.tray.set_state("transcribing")
 
         try:
-            audio = self.recorder.stop()
-        except NoAudioCapturedError:
-            logger.info("Nessun audio catturato, torno idle")
+            try:
+                audio = self.recorder.stop()
+            except NoAudioCapturedError:
+                logger.info("Nessun audio catturato, torno idle")
+                return
+
+            raw_text = self.stt_engine.transcribe(audio)
+            clean_text = clean_transcript(raw_text, self.config.filler_words)
+
+            if clean_text:
+                self.output_handler.paste(clean_text, auto_paste=self.config.auto_paste)
+        except Exception:
+            logger.exception("Errore durante la trascrizione")
+        finally:
             self.state = State.IDLE
             self.tray.set_state("idle")
-            return
-
-        raw_text = self.stt_engine.transcribe(audio)
-        clean_text = clean_transcript(raw_text, self.config.filler_words)
-
-        if clean_text:
-            self.output_handler.paste(clean_text, auto_paste=self.config.auto_paste)
-
-        self.state = State.IDLE
-        self.tray.set_state("idle")
 
     def _on_toggle_startup(self, enabled: bool):
         if enabled:
