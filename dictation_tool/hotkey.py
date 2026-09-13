@@ -20,5 +20,9 @@ class HotkeyListener:
 
     def stop(self) -> None:
         if self._handle is not None:
-            keyboard.remove_hotkey(self._handle)
-            self._handle = None
+            try:
+                keyboard.remove_hotkey(self._handle)
+            except Exception as e:
+                logger.warning(f"Impossibile rimuovere l'hotkey: {e}")
+            finally:
+                self._handle = None

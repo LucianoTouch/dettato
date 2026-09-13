@@ -49,8 +49,10 @@ class TrayIcon:
         self._on_toggle_startup(self._startup_enabled)
 
     def _handle_exit(self, icon, item):
-        self._on_exit()
-        icon.stop()
+        try:
+            self._on_exit()
+        finally:
+            icon.stop()
 
     def set_state(self, state: State) -> None:
         self._icon.icon = _make_icon_image(COLORS[state])

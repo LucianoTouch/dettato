@@ -26,7 +26,7 @@ class OutputHandler:
             keyboard.send("ctrl+v")
             time.sleep(self.paste_delay)
 
-        if original_clipboard is not None:
+        if original_clipboard:
             try:
                 pyperclip.copy(original_clipboard)
             except Exception as e:

@@ -1,8 +1,11 @@
 import json
+import logging
 import os
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_FILLER_WORDS = ["ehm", "uhm", "cioè cioè", "insomma insomma"]
 
@@ -38,9 +41,13 @@ def load_config(path: Optional[Path] = None) -> Config:
         path.write_text(json.dumps(DEFAULT_CONFIG, indent=2, ensure_ascii=False), encoding="utf-8")
         return Config()
 
-    data = json.loads(path.read_text(encoding="utf-8"))
-    merged = {**DEFAULT_CONFIG, **data}
-    return Config(**merged)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        merged = {**DEFAULT_CONFIG, **data}
+        return Config(**merged)
+    except Exception as e:
+        logger.warning(f"Impossibile leggere il file di configurazione '{path}' ({e}), uso i valori predefiniti")
+        return Config()
 
 
 def save_config(config: Config, path: Optional[Path] = None) -> None:
