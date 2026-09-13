@@ -1,0 +1,10 @@
+faster-whisper
+ctranslate2
+sounddevice
+numpy
+soundfile
+pyperclip
+keyboard
+pystray
+Pillow
+pytest
