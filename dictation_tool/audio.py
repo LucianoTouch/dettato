@@ -45,7 +45,7 @@ class AudioRecorder:
         # device's native one (e.g. 48000Hz instead of the 16000Hz
         # Whisper needs); auto_convert lets WASAPI resample for us.
         extra_settings = sd.WasapiSettings(auto_convert=True) if device is not None else None
-        self._stream = sd.InputStream(
+        stream = sd.InputStream(
             device=device,
             samplerate=self.sample_rate,
             channels=1,
@@ -53,7 +53,15 @@ class AudioRecorder:
             callback=self._callback,
             extra_settings=extra_settings,
         )
-        self._stream.start()
+        try:
+            stream.start()
+        except Exception:
+            # Otherwise the half-opened stream leaks its device handle,
+            # leaving the mic stuck "busy" for every later attempt in
+            # this process even though the device itself is free.
+            stream.close()
+            raise
+        self._stream = stream
 
     def stop(self) -> np.ndarray:
         if self._stream is None:
