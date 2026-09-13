@@ -1,3 +1,33 @@
+import os
+
+
+def _register_cuda_dll_dirs() -> None:
+    """Make pip-installed CUDA runtime DLLs (cuBLAS, cuDNN) discoverable.
+
+    ctranslate2 loads these via a plain LoadLibraryW at inference time,
+    which only searches the classic Windows DLL search order (app dir,
+    system dir, PATH) — it does not honor os.add_dll_directory(). A plain
+    `pip install` of nvidia-cublas-cu12/nvidia-cudnn-cu12 does not add
+    their bin/ folders to PATH on its own, so we prepend them here.
+    """
+    try:
+        import nvidia.cublas
+        import nvidia.cudnn
+    except ImportError:
+        return
+    bin_dirs = []
+    for pkg in (nvidia.cublas, nvidia.cudnn):
+        for path in pkg.__path__:
+            bin_dir = os.path.join(path, "bin")
+            if os.path.isdir(bin_dir):
+                bin_dirs.append(bin_dir)
+                os.add_dll_directory(bin_dir)
+    if bin_dirs:
+        os.environ["PATH"] = os.pathsep.join(bin_dirs) + os.pathsep + os.environ.get("PATH", "")
+
+
+_register_cuda_dll_dirs()
+
 import ctranslate2
 from faster_whisper import WhisperModel
 
