@@ -1,5 +1,7 @@
 import os
 
+import numpy as np
+
 
 def _register_cuda_dll_dirs() -> None:
     """Make pip-installed CUDA runtime DLLs (cuBLAS, cuDNN) discoverable.
@@ -49,6 +51,21 @@ def compute_type_for_device(device: str) -> str:
     return "float16" if device == "cuda" else "int8"
 
 
+def normalize_audio(audio: np.ndarray, target_peak: float = 0.9) -> np.ndarray:
+    """Scale audio so its peak amplitude reaches target_peak.
+
+    A quiet microphone input degrades both VAD speech detection and
+    transcription accuracy/completeness (confirmed: the same clip
+    transcribed more completely once boosted to a normal level). Leaves
+    near-silent buffers untouched to avoid amplifying noise into nothing.
+    """
+    peak = float(np.abs(audio).max()) if audio.size else 0.0
+    if peak < 1e-4:
+        return audio.astype(np.float32)
+    gain = target_peak / peak
+    return np.clip(audio * gain, -1.0, 1.0).astype(np.float32)
+
+
 class SttEngine:
     def __init__(self, model_size: str = "large-v3", device: str = "auto"):
         resolved_device = resolve_device(device)
@@ -61,5 +78,6 @@ class SttEngine:
             self.device = "cpu"
 
     def transcribe(self, audio, sample_rate: int = 16000) -> str:
+        audio = normalize_audio(audio)
         segments, _ = self.model.transcribe(audio, language="it", vad_filter=True)
         return "".join(segment.text for segment in segments).strip()
