@@ -3,7 +3,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import soundfile as sf
-from dictation_tool.stt import SttEngine
+from dettato.stt import SttEngine
 
 
 def main():

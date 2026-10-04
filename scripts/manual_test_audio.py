@@ -4,7 +4,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import time
 import soundfile as sf
-from dictation_tool.audio import AudioRecorder
+from dettato.audio import AudioRecorder
 
 
 def main():

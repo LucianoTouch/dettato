@@ -1,4 +1,4 @@
-from dictation_tool.postprocess import clean_transcript
+from dettato.postprocess import clean_transcript
 
 
 def test_removes_simple_filler_word():
@@ -33,3 +33,17 @@ def test_empty_string_returns_empty():
 def test_fixes_space_before_punctuation():
     result = clean_transcript("ciao , come va ?", [])
     assert result == "ciao, come va?"
+
+
+def test_replacements_fix_recurring_mistakes_case_insensitively():
+    result = clean_transcript("Ho lanciato la campagna su Meta ed oggi", [], {"meta ed": "Meta Ads"})
+    assert result == "Ho lanciato la campagna su Meta Ads oggi"
+
+
+def test_replacements_match_whole_words_only():
+    assert clean_transcript("metadati", [], {"meta": "Meta"}) == "metadati"
+
+
+def test_longer_replacement_wins_over_its_prefix():
+    result = clean_transcript("meta ed e meta", [], {"meta": "Meta", "meta ed": "Meta Ads"})
+    assert result == "Meta Ads e Meta"

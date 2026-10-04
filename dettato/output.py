@@ -14,6 +14,13 @@ class OutputHandler:
         if not text:
             return
 
+        if not auto_paste:
+            # Nothing to restore: the point of this mode is to leave the
+            # transcribed text sitting on the clipboard for the user to
+            # paste manually whenever they're ready.
+            pyperclip.copy(text)
+            return
+
         original_clipboard = None
         try:
             original_clipboard = pyperclip.paste()
@@ -21,10 +28,8 @@ class OutputHandler:
             logger.warning(f"Impossibile leggere la clipboard corrente: {e}")
 
         pyperclip.copy(text)
-
-        if auto_paste:
-            keyboard.send("ctrl+v")
-            time.sleep(self.paste_delay)
+        keyboard.send("ctrl+v")
+        time.sleep(self.paste_delay)
 
         if original_clipboard:
             try:

@@ -3,7 +3,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import time
-from dictation_tool.tray import TrayIcon
+from dettato.tray import TrayIcon
 
 
 def main():

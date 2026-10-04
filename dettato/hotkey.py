@@ -10,6 +10,10 @@ class HotkeyListener:
         self.on_toggle = on_toggle
         self._handle = None
 
+    @property
+    def is_active(self) -> bool:
+        return self._handle is not None
+
     def start(self) -> bool:
         try:
             self._handle = keyboard.add_hotkey(self.hotkey, self.on_toggle)

@@ -4,7 +4,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import time
 import pyperclip
-from dictation_tool.output import OutputHandler
+from dettato.output import OutputHandler
 
 
 def main():
