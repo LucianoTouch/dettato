@@ -4,6 +4,7 @@ from typing import Callable, Literal
 
 import pystray
 
+from dettato import __version__
 from dettato.icons import state_icon
 
 logger = logging.getLogger(__name__)
@@ -75,7 +76,7 @@ class TrayIcon:
         return self._state
 
     def _tooltip(self) -> str:
-        text = f"Dettato — {_STATE_LABELS[self._state]}"
+        text = f"Dettato {__version__} — {_STATE_LABELS[self._state]}"
         if self._state == "idle" and self.hotkey:
             text += f" ({self.hotkey})"
         return text
