@@ -5,7 +5,10 @@ param(
     [Parameter(Mandatory = $true)][string]$Version,
     [string]$Notes = ""
 )
-$ErrorActionPreference = "Stop"
+# "Continue": in Windows PowerShell 5.1 "Stop" turns any stderr output of git/gh
+# (which they write even on success) into a fatal error. Failures are
+# checked explicitly through $LASTEXITCODE and -ErrorAction Stop instead.
+$ErrorActionPreference = "Continue"
 Set-Location $PSScriptRoot
 
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Versione non valida: usa il formato 1.2.3" }
@@ -37,8 +40,9 @@ $dist = Join-Path $PSScriptRoot "dist"
 $setup = Join-Path $dist "Dettato-Setup.exe"
 $zip = Join-Path $dist "Dettato-update.zip"
 Remove-Item $zip -ErrorAction SilentlyContinue
-Compress-Archive -Path (Join-Path $dist "Dettato\Dettato.exe") -DestinationPath $zip
-$runtimeId = (Get-Content (Join-Path $PSScriptRoot "build\dettato\runtime_id.txt") -Raw).Trim()
+Compress-Archive -Path (Join-Path $dist "Dettato\Dettato.exe") -DestinationPath $zip -ErrorAction Stop
+$runtimeId = (Get-Content (Join-Path $PSScriptRoot "build\dettato\runtime_id.txt") -Raw -ErrorAction Stop).Trim()
+if (-not $runtimeId) { throw "runtime_id mancante: build incompleta" }
 
 function Describe($path) {
     [ordered]@{
@@ -59,7 +63,8 @@ $manifestPath = Join-Path $dist "manifest.json"
 
 # 4. Commit, tag, pubblicazione
 & git add $init
-& git commit -m "release: v$Version"
+& git diff --cached --quiet
+if ($LASTEXITCODE -ne 0) { & git commit -m "release: v$Version" }
 & git tag "v$Version"
 & git push origin HEAD --tags
 if ($LASTEXITCODE -ne 0) { throw "git push non riuscito" }
